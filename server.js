@@ -10,7 +10,7 @@ const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 
 // Database connection
-const url = 'mongodb://localhost/hack36';
+const url = 'mongodb://127.0.0.1:27017/hack36';
 mongoose.connect(url, {useNewUrlParser: true, useUnifiedTopology: true});
 const connection = mongoose.connection;
 connection.once('open', ()=>{
@@ -41,20 +41,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// const mailOptions = {
-//     from: 'rokda.money.manager@gmail.com',
-//     to: '123aggarwalvision@gmail.com',
-//     subject: 'Subject of the email',
-//     text: 'This is the plain text body of the email'
-// };
 
-// transporter.sendMail(mailOptions, function(error, info){
-//     if (error) {
-//     console.log(error);
-//     } else {
-//     console.log('Email sent: ' + info.response);
-//     }
-// });
   
 
 const personSchema = new mongoose.Schema({
@@ -124,7 +111,7 @@ const ExpenseSchema = new mongoose.Schema({
 })
 const Expense=mongoose.model("Expense",ExpenseSchema)
 
-// Expense.updateOne({email : loggedInUser.email}, {req.body.category: });
+
 
 
 
@@ -160,7 +147,11 @@ app.post("/signup", async(req, res)=>{
             return;
         }
     }
-      
+    const userExist = await User.findOne({email : req.body.email});
+    if(userExist){
+        res.render('auth/signup', {error: 'Email already Exist. '});
+        return;
+    }
     await user.save();
     await Expense.insertMany({email:req.body.email}).then((expense)=>{
         currentExpense=expense;
@@ -238,17 +229,6 @@ app.post('/profile', async (req,res)=>{
     }
 })
 
-
-// app.post("/addMoney", async (req, res)=>{
-//     if(!loggedInUser){
-//         return res.redirect("/login")
-//     }
-//     loggedInUser.Balance = loggedInUser.Balance + Number(req.body.amount);
-//     await User.updateOne({email : loggedInUser.email}, {Balance: loggedInUser.Balance});
-//     await Transaction.insertMany({email : loggedInUser.email, to : (loggedInUser.fname + " " + loggedInUser.lname), type: "credited", from : req.body.name, amount : Number(req.body.amount)});
-//     res.render('payments', {user: loggedInUser, message:"Amount of ₹" + req.body.amount + " is succesfully added in wallet!"})
-// })
-
 app.post("/bankTransfer", async (req, res)=>{
     if(!loggedInUser){
         return res.redirect("/login")
@@ -314,9 +294,6 @@ app.post("/upiTransfer", async (req, res)=>{
         return res.redirect("/login")
     }
     var Transactions = await Transaction.find({email : loggedInUser.email})
-    // console.log(req.body.category)
-    // console.log(req.body.category=='Entertainment')
-    // console.log(typeof(req.body.category))
     if(loggedInUser.Balance<Number(req.body.amount)){
         return res.render('payments', {user: loggedInUser, message: "You do not have sufficient balance in your wallet!", Transactions: Transactions})
     }
@@ -412,14 +389,6 @@ app.get("/logout", (req, res)=>{
     loggedInUser=null;
     res.render('auth/login', {error:"Successfully logged out"})
 })
-
-
-
-// app.post('/trial', (req, res)=>{
-//     console.log(req.body.name=="amit")
-
-//     res.redirect("emi")
-// })
 
 
 const PORT = process.env.PORT || 3000;
