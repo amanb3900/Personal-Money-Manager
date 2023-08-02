@@ -284,9 +284,17 @@ app.post("/bankTransfer", async (req, res)=>{
 })
 
 app.post('/investment', async (req, res)=>{
+    var Transactions = await Transaction.find({email : loggedInUser.email})
+    if(loggedInUser.Balance<Number(req.body.amount)){
+        return res.render('payments', {user: loggedInUser, message: "You do not have sufficient balance in your wallet!", Transactions: Transactions})
+    }
     currentExpense.Invest = currentExpense.Invest + Number(req.body.amount)
     investing = investing + Number(req.body.amount)
+    saving = loggedInUser.Balance
+    loggedInUser.Balance = loggedInUser.Balance - Number(req.body.amount)
     await Expense.updateOne({email : loggedInUser.email},{Invest: currentExpense.Invest})
+    Transactions = await Transaction.find({email : loggedInUser.email})
+    res.render('payments', {user: loggedInUser, message:"Amount of ₹" + req.body.amount + " is succesfully invested!", Transactions: Transactions})
 })
 
 app.post("/upiTransfer", async (req, res)=>{
